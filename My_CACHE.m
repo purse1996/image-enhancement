@@ -1,11 +1,15 @@
 function img_new = My_CACHE(img)
-%
-[m ,n] = size(img);
-img_origin = img;
-img_new = zeros(m, n);
-%»ñÈ¡²»Í¬·Ö±æÂÊÍ¼Æ¬¹¹³É½ğ×ÖËş
+[m ,n, c] = size(img);
+if c==3
+    img = rgb2gray(img);
+else
+    img = img;
+end
 
-%cmpute_com¼ÆËãdark-pass filter gradient
+img_new = zeros(m, n);
+%è·å–ä¸åŒåˆ†è¾¨ç‡å›¾ç‰‡æ„æˆé‡‘å­—å¡”
+
+%cmpute_comè®¡ç®—dark-pass filter gradient
 com1 = compute_com(img);
 figure
  imshow(uint8(com1*255));        
@@ -24,7 +28,7 @@ figure
 imshow(uint8(com3*255));         
        
 % com3 = imresize(com3,4 , 'bicubic');      
-%Ö±½ÓbicubicÎŞ·¨»Øµ½Ô­À´´óĞ¡
+%ç›´æ¥bicubicæ— æ³•å›åˆ°åŸæ¥å¤§å°
 com3 = imresize(com3, [m, n], 'bicubic');      
 update3 = max(com3, 0.001);
 
@@ -37,22 +41,22 @@ imshow(uint8(com4*255));
 com4 = imresize(com4, [m, n], 'bicubic');
 update4 = max(com4, 0.001);
 
-%²»Í¬·Ö±æÂÊdark-pass filterµÄ¼¸ºÎÆ½¾ù
+%ä¸åŒåˆ†è¾¨ç‡dark-pass filterçš„å‡ ä½•å¹³å‡
 update = (update1.*update2.*update3.*update4).^(1/4);
 update_sum = sum(sum(update));
 
-%ÖØĞÂ¶¨ÒåµÄ»Ò¶È¸ÅÂÊ
+%é‡æ–°å®šä¹‰çš„ç°åº¦æ¦‚ç‡
 p_old = zeros(256, 1);
 p_new = zeros(256,1);
 for i=1:256
     for j=1:m
         for k=1:n
-            p_old(i) = p_old(i) + update(j, k)*kroneckerDelta(double(img_origin(j,k)), double(i-1))/update_sum;
+            p_old(i) = p_old(i) + update(j, k)*kroneckerDelta(double(img(j,k)), double(i-1))/update_sum;
         end
     end
 end
 
-%ÀÛ»ı¸ÅÂÊ
+%ç´¯ç§¯æ¦‚ç‡
 for i=1:256
     if(i==1)
         p_new(i) = p_old(i);
@@ -63,20 +67,21 @@ end
 
 
 
-% »Ò¶ÈÖµµÄÖØĞÂ¶¨Òå
+% ç°åº¦å€¼çš„é‡æ–°å®šä¹‰
 for i=1:m
     for j=1:n
-        img_new(i,j) = round(255*p_new(img_origin(i,j)+1));
+        img_new(i,j) = round(255*p_new(img(i,j)+1));
     end
 end
 
-img_new = unit8(img_new);
+img_new = uint8(img_new);
 % subplot(1,2,1)
 % imshow(img_origin);
 % subplot(1,2,2)
 % imshow(uint8(img_new));
 end
 
+%åœ¨è°ƒç”¨matlabè¯¥å‡½æ•°å‡ºç°äº†é—®é¢˜ï¼Œæ•…è‡ªå·±å†™äº†ä¸€ä¸ª
 function b = kroneckerDelta(c, d)
 if c==d
     b =1;
@@ -92,7 +97,7 @@ function  com = compute_com(img)
     img2 = [img1; zeros(1,n)];
     img3 = [zeros(m+2,1), img2];
     img_padding = double([img3, zeros(m+2,1)]);
-    %ÎªÁË¼ò»¯¼ÆËã£¬¹ÊÁÚÓòÖ»È¡ÁË4¸öµã
+    %ä¸ºäº†ç®€åŒ–è®¡ç®—ï¼Œæ•…é‚»åŸŸåªå–äº†4ä¸ªç‚¹
     for i=1:m
         for j=1:n
             NE1 = min((img_padding(i+1,j+1)-img_padding(i,j+1))/255, 0);
